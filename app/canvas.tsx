@@ -2,7 +2,7 @@
 // Main canvas screen with gesture handling, visual grid, and accessibility features
 // Blind-first design with visual feedback as optional enhancement
 
-import { View, Text, Pressable, Modal, ScrollView } from "react-native";
+import { View, Text, Pressable, Modal, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { useCanvasStore, AVAILABLE_COLORS } from "../src/store/useCanvasStore";
@@ -13,6 +13,7 @@ import { VisualGrid } from "../src/ui/VisualGrid";
 import { ActionMenu } from "../src/ui/ActionMenu";
 import { GuideModal } from "../src/ui/GuideModal";
 import { canvasToSummary } from "../src/export/toDescription";
+import { getDeviceInfo } from "../src/config/canvasConfig";
 
 function getColorName(hex: string): string {
   const colorMap: Record<string, string> = {
@@ -57,8 +58,11 @@ export default function Canvas() {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [hasAnnounced, setHasAnnounced] = useState(false);
+  const [showDeviceInfo, setShowDeviceInfo] = useState(false);
   const speechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const colorMenuReminderRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const deviceInfo = useMemo(() => getDeviceInfo(), []);
 
   useEffect(() => {
     if (!hasAnnounced) {
@@ -167,7 +171,6 @@ export default function Canvas() {
         const colorName = result.color ? getColorName(result.color) : selectedColor;
         Audio.speak(`Color menu opened. ${colorName}. ${colorMenuIndex + 1} of ${AVAILABLE_COLORS.length}. Swipe left or right to browse colors. Double tap to confirm. Long press to close.`);
         
-        // Set reminder after 5 seconds
         if (colorMenuReminderRef.current) {
           clearTimeout(colorMenuReminderRef.current);
         }
@@ -184,7 +187,6 @@ export default function Canvas() {
   
   const handleCloseMenu = useCallback(() => {
     try {
-      // Clear reminder timeout
       if (colorMenuReminderRef.current) {
         clearTimeout(colorMenuReminderRef.current);
         colorMenuReminderRef.current = null;
@@ -389,7 +391,6 @@ export default function Canvas() {
     })
     .runOnJS(true), [isColorMenuOpen, handleOpenMenu, handleCloseMenu]);
   
-  // Context awareness: Use longer long press (2 seconds) as alternative to 3-finger tap
   const contextLongPressGesture = useMemo(() => Gesture.LongPress()
     .minDuration(2000)
     .onStart(() => {
@@ -416,24 +417,24 @@ export default function Canvas() {
     ), [doubleTapGesture, tapGesture, longPressGesture, contextLongPressGesture, panGesture]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1">
+    <SafeAreaView style={styles.container}>
+      <View style={styles.mainView}>
         <View 
-          className="flex-none bg-gray-100 border-b border-gray-300"
+          style={styles.toolbar}
           accessible={true}
           accessibilityRole="toolbar"
           accessibilityLabel="Toolbar with 6 action buttons"
         >
-          <View className="flex-row flex-wrap p-2 gap-2">
+          <View style={styles.toolbarButtons}>
             <Pressable
               onPress={handleToggleEraser}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={isEraserMode ? "Eraser mode on" : "Eraser mode off"}
               accessibilityHint="Double tap to toggle eraser mode"
-              className={`px-4 py-2 rounded ${isEraserMode ? 'bg-orange-600' : 'bg-gray-600'}`}
+              style={[styles.toolbarButton, isEraserMode ? styles.eraserButton : styles.defaultButton]}
             >
-              <Text className="text-white font-semibold">
+              <Text style={styles.buttonText}>
                 {isEraserMode ? "Eraser: ON" : "Eraser: OFF"}
               </Text>
             </Pressable>
@@ -445,9 +446,9 @@ export default function Canvas() {
               accessibilityRole="button"
               accessibilityLabel="Undo"
               accessibilityHint="Double tap to undo last action"
-              className={`px-4 py-2 rounded ${canUndo ? 'bg-blue-600' : 'bg-gray-400'}`}
+              style={[styles.toolbarButton, canUndo ? styles.activeButton : styles.disabledButton]}
             >
-              <Text className="text-white font-semibold">Undo</Text>
+              <Text style={canUndo ? styles.buttonText : styles.disabledButtonText}>Undo</Text>
             </Pressable>
 
             <Pressable
@@ -457,9 +458,9 @@ export default function Canvas() {
               accessibilityRole="button"
               accessibilityLabel="Redo"
               accessibilityHint="Double tap to redo last undone action"
-              className={`px-4 py-2 rounded ${canRedo ? 'bg-blue-600' : 'bg-gray-400'}`}
+              style={[styles.toolbarButton, canRedo ? styles.activeButton : styles.disabledButton]}
             >
-              <Text className="text-white font-semibold">Redo</Text>
+              <Text style={canRedo ? styles.buttonText : styles.disabledButtonText}>Redo</Text>
             </Pressable>
 
             <Pressable
@@ -468,9 +469,9 @@ export default function Canvas() {
               accessibilityRole="button"
               accessibilityLabel="Describe canvas"
               accessibilityHint="Double tap to hear what you have drawn so far"
-              className="px-4 py-2 rounded bg-teal-600 active:bg-teal-700"
+              style={[styles.toolbarButton, styles.defaultButton]}
             >
-              <Text className="text-white font-semibold">Describe</Text>
+              <Text style={styles.buttonText}>Describe</Text>
             </Pressable>
 
             <Pressable
@@ -479,9 +480,9 @@ export default function Canvas() {
               accessibilityRole="button"
               accessibilityLabel="Actions menu"
               accessibilityHint="Double tap to open save, load, and share options"
-              className="px-4 py-2 rounded bg-purple-600 active:bg-purple-700"
+              style={[styles.toolbarButton, styles.defaultButton]}
             >
-              <Text className="text-white font-semibold">Actions</Text>
+              <Text style={styles.buttonText}>Actions</Text>
             </Pressable>
 
             <Pressable
@@ -490,37 +491,36 @@ export default function Canvas() {
               accessibilityRole="button"
               accessibilityLabel="Guide"
               accessibilityHint="Double tap to open guide showing all gestures and instructions"
-              className="px-4 py-2 rounded bg-indigo-600 active:bg-indigo-700"
+              style={[styles.toolbarButton, styles.defaultButton]}
             >
-              <Text className="text-white font-semibold">Guide</Text>
+              <Text style={styles.buttonText}>Guide</Text>
             </Pressable>
           </View>
         </View>
 
         <GestureDetector gesture={composedGesture}>
           <View 
-            className="flex-1"
+            style={styles.canvasArea}
             accessible={true}
             accessibilityLabel="Drawing canvas"
             accessibilityHint="Swipe to move, tap to inspect, double tap to paint, long press for color menu, extra long press for context"
           >
             {isColorMenuOpen ? (
-              <View className="flex-1 items-center justify-center bg-gray-50">
-                <View className="items-center">
-                  <Text className="text-gray-800 text-xl font-bold mb-4">
+              <View style={styles.colorMenuContainer}>
+                <View style={styles.colorMenuContent}>
+                  <Text style={styles.colorMenuTitle}>
                     Color Menu
                   </Text>
                   <View
-                    className="w-32 h-32 rounded-lg mb-4 border-4 border-gray-800"
-                    style={{ backgroundColor: selectedColor }}
+                    style={[styles.colorPreview, { backgroundColor: selectedColor }]}
                   />
-                  <Text className="text-gray-700 text-lg mb-2">
+                  <Text style={styles.colorName}>
                     {getColorName(selectedColor)}
                   </Text>
-                  <Text className="text-gray-600 text-base mb-6">
+                  <Text style={styles.colorCounter}>
                     {colorMenuIndex + 1} of {AVAILABLE_COLORS.length}
                   </Text>
-                  <Text className="text-gray-500 text-sm text-center px-8">
+                  <Text style={styles.colorMenuInstructions}>
                     Swipe left/right to browse colors{"\n"}
                     Double tap to confirm and close{"\n"}
                     Long press to close without changing
@@ -528,22 +528,44 @@ export default function Canvas() {
                 </View>
               </View>
             ) : (
-              <View className="flex-1 items-center justify-center bg-gray-50 p-4">
-                <View className="mb-4">
+              <View style={styles.canvasContainer}>
+                <View style={styles.gridWrapper}>
                   <VisualGrid canvas={canvas} />
                 </View>
-                <View className="items-center">
-                  <Text className="text-gray-600 text-base mb-2">
+                
+                {/* Device Info Toggle */}
+                <Pressable
+                  onPress={() => setShowDeviceInfo(!showDeviceInfo)}
+                  style={styles.deviceInfoToggle}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Device info"
+                  accessibilityHint="Double tap to show device and grid information"
+                >
+                  <Text style={styles.deviceInfoToggleText}>ℹ️</Text>
+                </Pressable>
+                
+                {showDeviceInfo && (
+                  <View style={styles.deviceInfoContainer}>
+                    <Text style={styles.deviceInfoTitle}>Dynamic Grid Config</Text>
+                    <Text style={styles.deviceInfoText}>Device: {deviceInfo.isTablet ? 'Tablet' : 'Mobile'}</Text>
+                    <Text style={styles.deviceInfoText}>Screen: {Math.round(deviceInfo.screenWidth)}x{Math.round(deviceInfo.screenHeight)}</Text>
+                    <Text style={styles.deviceInfoText}>Grid: {deviceInfo.gridSize}</Text>
+                    <Text style={styles.deviceInfoText}>Cell Size: {deviceInfo.cellSize}px</Text>
+                    <Text style={styles.deviceInfoText}>Platform: {deviceInfo.platform}</Text>
+                  </View>
+                )}
+                <View style={styles.canvasInfo}>
+                  <Text style={styles.focusText}>
                     Focus: Row {focusPosition.row}, Col {focusPosition.col}
                   </Text>
                   <View
-                    className="w-16 h-16 rounded mb-2 border-2 border-gray-400"
-                    style={{ backgroundColor: selectedColor }}
+                    style={[styles.selectedColorBox, { backgroundColor: selectedColor }]}
                   />
-                  <Text className="text-gray-600 text-base mb-4">
-                    Color: {getColorName(selectedColor)}
+                  <Text style={styles.selectedColorName}>
+                    {getColorName(selectedColor)}
                   </Text>
-                  <Text className="text-gray-500 text-xs text-center px-8">
+                  <Text style={styles.modeText}>
                     Mode: {isEraserMode ? "ERASER" : "PAINT"}
                   </Text>
                 </View>
@@ -559,7 +581,7 @@ export default function Canvas() {
         presentationStyle="pageSheet"
         onRequestClose={handleCloseActions}
       >
-        <SafeAreaView className="flex-1">
+        <SafeAreaView style={styles.modalContainer}>
           <ActionMenu onClose={handleCloseActions} />
         </SafeAreaView>
       </Modal>
@@ -570,7 +592,7 @@ export default function Canvas() {
         presentationStyle="pageSheet"
         onRequestClose={handleCloseGuide}
       >
-        <SafeAreaView className="flex-1">
+        <SafeAreaView style={styles.modalContainer}>
           <GuideModal onClose={handleCloseGuide} />
         </SafeAreaView>
       </Modal>
@@ -578,3 +600,188 @@ export default function Canvas() {
   );
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
+  },
+  mainView: {
+    flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  
+  // Toolbar
+  toolbar: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E4E7',
+  },
+  toolbarButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 12,
+    gap: 8,
+  },
+  toolbarButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  defaultButton: {
+    backgroundColor: '#3F3F46',
+  },
+  primaryButton: {
+    backgroundColor: '#18181B',
+  },
+  activeButton: {
+    backgroundColor: '#2563EB',
+  },
+  eraserButton: {
+    backgroundColor: '#DC2626',
+  },
+  disabledButton: {
+    backgroundColor: '#D4D4D8',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  disabledButtonText: {
+    color: '#71717A',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  
+  // Canvas Area
+  canvasArea: {
+    flex: 1,
+  },
+  
+  // Color Menu
+  colorMenuContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FAFAFA',
+  },
+  colorMenuContent: {
+    alignItems: 'center',
+  },
+  colorMenuTitle: {
+    color: '#18181B',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 24,
+  },
+  colorPreview: {
+    width: 160,
+    height: 160,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 4,
+    borderColor: '#18181B',
+  },
+  colorName: {
+    color: '#18181B',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  colorCounter: {
+    color: '#52525B',
+    fontSize: 18,
+    marginBottom: 32,
+  },
+  colorMenuInstructions: {
+    color: '#71717A',
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 32,
+    lineHeight: 24,
+  },
+  
+  // Canvas Container
+  canvasContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FAFAFA',
+    padding: 24,
+  },
+  gridWrapper: {
+    marginBottom: 24,
+  },
+  canvasInfo: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E4E4E7',
+  },
+  focusText: {
+    color: '#52525B',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  selectedColorBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#A1A1AA',
+  },
+  selectedColorName: {
+    color: '#3F3F46',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  modeText: {
+    color: '#71717A',
+    fontSize: 12,
+  },
+  
+  // Device Info Styles
+  deviceInfoToggle: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E4E4E7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  deviceInfoToggleText: {
+    fontSize: 18,
+  },
+  deviceInfoContainer: {
+    position: 'absolute',
+    top: 50,
+    right: 10,
+    backgroundColor: '#18181B',
+    padding: 12,
+    borderRadius: 8,
+    minWidth: 200,
+    zIndex: 10,
+  },
+  deviceInfoTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  deviceInfoText: {
+    color: '#E4E4E7',
+    fontSize: 12,
+    marginBottom: 4,
+    fontFamily: 'monospace',
+  },
+});

@@ -10,6 +10,7 @@ import type {
   HistoryState,
 } from "../canvas/types";
 import { createCanvas } from "../canvas/canvasModel";
+import { CANVAS_DIMENSIONS, DEFAULT_COLOR as CONFIG_DEFAULT_COLOR } from "../config/canvasConfig";
 import {
   paintCell,
   eraseCell,
@@ -87,11 +88,11 @@ interface CanvasStore {
 }
 
 /**
- * Default canvas configuration
+ * Default canvas configuration (from centralized config)
  */
-const DEFAULT_CANVAS_WIDTH = 8;
-const DEFAULT_CANVAS_HEIGHT = 8;
-const DEFAULT_COLOR = "#000000";
+const DEFAULT_CANVAS_WIDTH = CANVAS_DIMENSIONS.width;
+const DEFAULT_CANVAS_HEIGHT = CANVAS_DIMENSIONS.height;
+const DEFAULT_COLOR = CONFIG_DEFAULT_COLOR;
 
 /**
  * Canvas store using Zustand

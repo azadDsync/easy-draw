@@ -3,6 +3,7 @@
 // Pure function - no side effects
 
 import type { CanvasState } from "../canvas/types";
+import { SVG_CELL_SIZE } from "../config/canvasConfig";
 
 /**
  * SVG generation options
@@ -19,7 +20,7 @@ interface SVGOptions {
  * Default SVG options
  */
 const DEFAULT_SVG_OPTIONS: Required<SVGOptions> = {
-  cellSize: 20,
+  cellSize: SVG_CELL_SIZE,
   strokeWidth: 1,
   strokeColor: "#cccccc",
   backgroundColor: "#ffffff",

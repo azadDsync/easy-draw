@@ -2,9 +2,10 @@
 // Minimal visual representation of canvas grid
 // Optional for sighted users, not required for functionality
 
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import type { CanvasState } from "../canvas/types";
 import { getCellColor } from "../canvas/canvasModel";
+import { VISUAL_CELL_SIZE } from "../config/canvasConfig";
 
 interface VisualGridProps {
   canvas: CanvasState;
@@ -12,22 +13,14 @@ interface VisualGridProps {
 
 export function VisualGrid({ canvas }: VisualGridProps) {
   const { config, cells, focus } = canvas;
-  const cellSize = 32;
+  const cellSize = VISUAL_CELL_SIZE;
 
   return (
-    <View
-      style={{
-        flexDirection: "column",
-        borderWidth: 1,
-        borderColor: "#ccc",
-      }}
-    >
+    <View style={styles.gridContainer}>
       {Array.from({ length: config.height }).map((_, row) => (
         <View
           key={row}
-          style={{
-            flexDirection: "row",
-          }}
+          style={styles.row}
         >
           {Array.from({ length: config.width }).map((_, col) => {
             const isFocused = focus.row === row && focus.col === col;
@@ -36,13 +29,15 @@ export function VisualGrid({ canvas }: VisualGridProps) {
             return (
               <View
                 key={`${row}-${col}`}
-                style={{
-                  width: cellSize,
-                  height: cellSize,
-                  backgroundColor: color || "#ffffff",
-                  borderWidth: isFocused ? 3 : 1,
-                  borderColor: isFocused ? "#0000ff" : "#e0e0e0",
-                }}
+                style={[
+                  styles.cell,
+                  {
+                    width: cellSize,
+                    height: cellSize,
+                    backgroundColor: color || '#FFFFFF',
+                  },
+                  isFocused ? styles.focusedCell : styles.normalCell,
+                ]}
               />
             );
           })}
@@ -51,3 +46,28 @@ export function VisualGrid({ canvas }: VisualGridProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  gridContainer: {
+    flexDirection: 'column',
+    borderWidth: 2,
+    borderColor: '#D4D4D8',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  cell: {
+    borderWidth: 0.5,
+    borderColor: '#E4E4E7',
+  },
+  normalCell: {
+    borderWidth: 0.5,
+    borderColor: '#E4E4E7',
+  },
+  focusedCell: {
+    borderWidth: 2,
+    borderColor: '#2563EB',
+  },
+});

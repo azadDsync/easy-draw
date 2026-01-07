@@ -2,9 +2,9 @@
 // Action menu for save/load/export/clear operations
 // Fully accessible with speech and haptics
 
-import { View, Pressable, Text, Alert, Share, TextInput, ScrollView } from "react-native";
-import { GestureDetector, Gesture } from "react-native-gesture-handler";
+import { View, Pressable, Text, Alert, Share, TextInput, ScrollView, StyleSheet } from "react-native";
 import { useCanvasStore } from "../store/useCanvasStore";
+import { EXPORT_CELL_SIZE } from "../config/canvasConfig";
 import { canvasToDescription, canvasToSummary } from "../export/toDescription";
 import { canvasToSVG } from "../export/toSVG";
 import { shareCanvasAsImage, getImageDescription } from "../export/toImage";
@@ -47,7 +47,6 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
   };
 
   const handleSavePrompt = () => {
-    // Check if canvas is empty
     if (canvas.cells.size === 0) {
       Haptic.hapticWarning();
       Audio.speak("Cannot save empty canvas. Paint some cells first");
@@ -60,7 +59,6 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
   };
 
   const handleSave = async () => {
-    // Double check canvas is not empty
     if (canvas.cells.size === 0) {
       Haptic.hapticWarning();
       Audio.speak("Cannot save empty canvas");
@@ -94,7 +92,6 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
     Audio.speak("Loading canvas list");
     await loadSavedCanvasesList();
     
-    // Use updated state after refresh
     const result = await getSavedCanvases();
     const currentList = result.success && result.canvasList ? result.canvasList : [];
     
@@ -145,12 +142,10 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
   };
 
   const handleLoad = (id: string, name: string) => {
-    // Check if current canvas has painted cells
     const currentCanvas = canvas;
     const hasPaintedCells = currentCanvas.cells.size > 0;
 
     if (hasPaintedCells) {
-      // Show warning alert
       Alert.alert(
         "Existing Canvas",
         "You have an unsaved canvas with painted cells. What would you like to do?",
@@ -185,7 +180,6 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
         { cancelable: true }
       );
     } else {
-      // Canvas is empty, load directly
       loadCanvasById(id, name);
     }
   };
@@ -212,7 +206,6 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
               await deleteCanvas(id);
               await loadSavedCanvasesList();
               
-              // Check if list is now empty
               const result = await getSavedCanvases();
               const remaining = result.success && result.canvasList ? result.canvasList.length : 0;
               
@@ -336,14 +329,14 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
 
   if (showSaveDialog) {
     return (
-      <View className="flex-1 bg-white">
-        <View className="p-4 border-b border-gray-200">
-          <Text className="text-xl font-bold text-gray-800">Save Canvas</Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Save Canvas</Text>
         </View>
 
-        <View className="flex-1 p-4">
+        <View style={styles.content}>
           <Text
-            className="text-base text-gray-700 mb-2"
+            style={styles.instructionText}
             accessible={true}
             accessibilityRole="text"
           >
@@ -356,7 +349,7 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
             accessible={true}
             accessibilityLabel="Canvas name"
             accessibilityHint="Enter a name for your canvas"
-            className="border border-gray-300 rounded-lg p-3 mb-4 text-base"
+            style={styles.textInput}
           />
 
           <Pressable
@@ -366,10 +359,10 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
             accessibilityRole="button"
             accessibilityLabel="Save canvas"
             accessibilityHint="Double tap to save with entered name"
-            className="bg-blue-600 p-4 rounded-lg mb-3 active:bg-blue-700"
+            style={styles.primaryButton}
           >
-            <Text className="text-white text-lg font-semibold text-center">
-              Save
+            <Text style={styles.primaryButtonText}>
+              {isProcessing ? "Saving..." : "Save"}
             </Text>
           </Pressable>
 
@@ -384,9 +377,9 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
             accessibilityRole="button"
             accessibilityLabel="Cancel"
             accessibilityHint="Double tap to cancel save"
-            className="bg-gray-600 p-4 rounded-lg active:bg-gray-700"
+            style={styles.secondaryButton}
           >
-            <Text className="text-white text-lg font-semibold text-center">
+            <Text style={styles.secondaryButtonText}>
               Cancel
             </Text>
           </Pressable>
@@ -397,18 +390,18 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
 
   if (showLoadDialog) {
     return (
-      <View className="flex-1 bg-white">
-        <View className="p-4 border-b border-gray-200">
-          <Text className="text-xl font-bold text-gray-800">
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
             Saved Canvases ({savedCanvases.length})
           </Text>
         </View>
 
-        <ScrollView className="flex-1 p-4">
+        <ScrollView style={styles.scrollContent}>
           {savedCanvases.length === 0 ? (
-            <View className="p-8 items-center">
+            <View style={styles.emptyState}>
               <Text 
-                className="text-gray-600 text-lg text-center"
+                style={styles.emptyStateText}
                 accessible={true}
                 accessibilityRole="text"
               >
@@ -416,64 +409,54 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
               </Text>
             </View>
           ) : (
-            savedCanvases.map((item, index) => {
-              const doubleTap = Gesture.Tap()
-                .numberOfTaps(2)
-                .onEnd(() => {
+            savedCanvases.map((item, index) => (
+              <Pressable
+                key={item.id}
+                onPress={() => {
                   if (!isProcessing) {
                     Haptic.hapticMedium();
                     Audio.speak(`Loading ${item.name}`);
                     handleLoad(item.id, item.name);
                   }
-                });
-
-              const longPress = Gesture.LongPress()
-                .minDuration(800)
-                .onEnd(() => {
+                }}
+                onLongPress={() => {
                   if (!isProcessing) {
                     Haptic.hapticHeavy();
                     handleDelete(item.id, item.name);
                   }
-                });
-
-              const combinedGesture = Gesture.Race(doubleTap, longPress);
-
-              return (
-                <GestureDetector key={item.id} gesture={combinedGesture}>
-                  <View
-                    className="border border-gray-300 rounded-lg p-4 mb-3 bg-gray-50 active:bg-gray-100"
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Canvas ${index + 1} of ${savedCanvases.length}. ${item.name}. ${item.cellCount} cells painted. Saved ${new Date(item.timestamp).toLocaleString()}`}
-                    accessibilityHint="Double tap to load canvas, long press to delete canvas"
-                  >
-                    <Text
-                      className="text-lg font-semibold text-gray-800 mb-1"
-                      accessible={false}
-                    >
-                      {item.name}
-                    </Text>
-                    <Text
-                      className="text-sm text-gray-600"
-                      accessible={false}
-                    >
-                      {new Date(item.timestamp).toLocaleString()} • {item.cellCount}{" "}
-                      cells painted
-                    </Text>
-                    <Text
-                      className="text-xs text-gray-500 mt-2 italic"
-                      accessible={false}
-                    >
-                      Double tap to load • Long press to delete
-                    </Text>
-                  </View>
-                </GestureDetector>
-              );
-            })
+                }}
+                delayLongPress={800}
+                disabled={isProcessing}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`Canvas ${index + 1} of ${savedCanvases.length}. ${item.name}. ${item.cellCount} cells painted. Saved ${new Date(item.timestamp).toLocaleString()}`}
+                accessibilityHint="Double tap to load canvas, long press to delete canvas"
+                style={styles.canvasCard}
+              >
+                <Text
+                  style={styles.canvasCardTitle}
+                  accessible={false}
+                >
+                  {item.name}
+                </Text>
+                <Text
+                  style={styles.canvasCardInfo}
+                  accessible={false}
+                >
+                  {new Date(item.timestamp).toLocaleString()} • {item.cellCount} cells
+                </Text>
+                <Text
+                  style={styles.canvasCardHint}
+                  accessible={false}
+                >
+                  Double tap to load • Long press to delete
+                </Text>
+              </Pressable>
+            ))
           )}
         </ScrollView>
 
-        <View className="p-4 border-t border-gray-200">
+        <View style={styles.footer}>
           <Pressable
             onPress={() => {
               setShowLoadDialog(false);
@@ -484,9 +467,9 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
             accessibilityRole="button"
             accessibilityLabel="Close"
             accessibilityHint="Double tap to return to actions menu"
-            className="bg-gray-600 p-4 rounded-lg active:bg-gray-700"
+            style={styles.closeButton}
           >
-            <Text className="text-white text-lg font-semibold text-center">
+            <Text style={styles.closeButtonText}>
               Close
             </Text>
           </Pressable>
@@ -496,93 +479,103 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
   }
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="p-4 border-b border-gray-200">
-        <Text className="text-xl font-bold text-gray-800">Actions</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Actions</Text>
       </View>
 
-      <ScrollView className="flex-1 p-4">
-        <Pressable
-          onPress={handleSavePrompt}
-          disabled={isProcessing}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Save canvas"
-          accessibilityHint="Double tap to save your current canvas with a name"
-          className="bg-blue-600 p-4 rounded-lg mb-3 active:bg-blue-700"
-        >
-          <Text className="text-white text-lg font-semibold">Save Canvas</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={handleLoadPrompt}
-          disabled={isProcessing}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Load saved canvas"
-          accessibilityHint="Double tap to view and load your saved canvases"
-          className="bg-green-600 p-4 rounded-lg mb-3 active:bg-green-700"
-        >
-          <Text className="text-white text-lg font-semibold">
-            Load Saved Canvas
+      <ScrollView style={styles.scrollContent}>
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>
+            Canvas
           </Text>
-        </Pressable>
+          
+          <Pressable
+            onPress={handleSavePrompt}
+            disabled={isProcessing}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Save canvas"
+            accessibilityHint="Double tap to save your current canvas with a name"
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>Save Canvas</Text>
+          </Pressable>
 
-        <Pressable
-          onPress={handleClear}
-          disabled={isProcessing}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Clear canvas"
-          accessibilityHint="Double tap to clear all painted cells"
-          className="bg-orange-600 p-4 rounded-lg mb-3 active:bg-orange-700"
-        >
-          <Text className="text-white text-lg font-semibold">Clear Canvas</Text>
-        </Pressable>
+          <Pressable
+            onPress={handleLoadPrompt}
+            disabled={isProcessing}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Load saved canvas"
+            accessibilityHint="Double tap to view and load your saved canvases"
+            style={styles.successButton}
+          >
+            <Text style={styles.successButtonText}>
+              Load Canvas
+            </Text>
+          </Pressable>
 
-        <View className="my-4 border-t border-gray-300" />
+          <Pressable
+            onPress={handleClear}
+            disabled={isProcessing}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Clear canvas"
+            accessibilityHint="Double tap to clear all painted cells"
+            style={styles.dangerButton}
+          >
+            <Text style={styles.dangerButtonText}>Clear Canvas</Text>
+          </Pressable>
+        </View>
 
-        <Pressable
-          onPress={handleShareDescription}
-          disabled={isProcessing}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Share text description"
-          accessibilityHint="Double tap to share a screen reader friendly text description of your drawing"
-          className="bg-purple-600 p-4 rounded-lg mb-3 active:bg-purple-700"
-        >
-          <Text className="text-white text-lg font-semibold">
-            Share Text Description
+        <View style={[styles.section, styles.sectionSpacing]}>
+          <Text style={styles.sectionHeader}>
+            Share
           </Text>
-        </Pressable>
+          
+          <Pressable
+            onPress={handleShareDescription}
+            disabled={isProcessing}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Share text description"
+            accessibilityHint="Double tap to share a screen reader friendly text description of your drawing"
+            style={styles.shareButton}
+          >
+            <Text style={styles.shareButtonText}>
+              Text Description
+            </Text>
+          </Pressable>
 
-        <Pressable
-          onPress={handleShareImage}
-          disabled={isProcessing}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Share image"
-          accessibilityHint="Double tap to share a visual image that sighted users can see"
-          className="bg-pink-600 p-4 rounded-lg mb-3 active:bg-pink-700"
-        >
-          <Text className="text-white text-lg font-semibold">
-            Share Image
-          </Text>
-        </Pressable>
+          <Pressable
+            onPress={handleShareImage}
+            disabled={isProcessing}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Share image"
+            accessibilityHint="Double tap to share a visual image that sighted users can see"
+            style={styles.shareButton}
+          >
+            <Text style={styles.shareButtonText}>
+              Image (PNG)
+            </Text>
+          </Pressable>
 
-        <Pressable
-          onPress={handleShareSVG}
-          disabled={isProcessing}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Share S V G image"
-          accessibilityHint="Double tap to share an S V G image for sighted users"
-          className="bg-indigo-600 p-4 rounded-lg mb-3 active:bg-indigo-700"
-        >
-          <Text className="text-white text-lg font-semibold">
-            Share SVG Image
-          </Text>
-        </Pressable>
+          <Pressable
+            onPress={handleShareSVG}
+            disabled={isProcessing}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Share S V G image"
+            accessibilityHint="Double tap to share an S V G image for sighted users"
+            style={styles.shareButton}
+          >
+            <Text style={styles.shareButtonText}>
+              SVG Image
+            </Text>
+          </Pressable>
+        </View>
 
         <Pressable
           onPress={onClose}
@@ -590,25 +583,221 @@ export function ActionMenu({ onClose }: ActionMenuProps) {
           accessibilityRole="button"
           accessibilityLabel="Close actions menu"
           accessibilityHint="Double tap to return to canvas"
-          className="bg-gray-600 p-4 rounded-lg mt-4 active:bg-gray-700"
+          style={styles.closeButton}
         >
-          <Text className="text-white text-lg font-semibold">Close</Text>
+          <Text style={styles.closeButtonText}>Close</Text>
         </Pressable>
       </ScrollView>
 
-      {/* Hidden canvas image renderer for PNG export */}
-      <View
-        style={{
-          position: 'absolute',
-          left: -10000,
-          top: -10000,
-          opacity: 0,
-        }}
-        ref={imageViewRef}
-        collapsable={false}
-      >
-        <CanvasImageRenderer canvas={canvas} cellSize={100} />
+      <View style={styles.hiddenImageView} ref={imageViewRef} collapsable={false}>
+        <CanvasImageRenderer canvas={canvas} cellSize={EXPORT_CELL_SIZE} />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // Container
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
+  },
+
+  // Header
+  header: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E4E7',
+    backgroundColor: '#FFFFFF',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#18181B',
+  },
+
+  // Content Areas
+  content: {
+    flex: 1,
+    padding: 24,
+  },
+  scrollContent: {
+    flex: 1,
+    padding: 24,
+  },
+
+  // Footer
+  footer: {
+    padding: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#E4E4E7',
+    backgroundColor: '#FFFFFF',
+  },
+
+  // Sections
+  section: {
+    marginBottom: 16,
+  },
+  sectionSpacing: {
+    paddingTop: 16,
+  },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#71717A',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 12,
+  },
+
+  // Primary Button (Save - Blue)
+  primaryButton: {
+    backgroundColor: '#3F3F46',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // Success Button (Load - Green)
+  successButton: {
+    backgroundColor: '#3F3F46',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  successButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // Danger Button (Clear - Red)
+  dangerButton: {
+    backgroundColor: '#DC2626',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  dangerButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // Secondary Button (Cancel, Close)
+  secondaryButton: {
+    backgroundColor: '#E4E4E7',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  secondaryButtonText: {
+    color: '#18181B',
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // Share Buttons
+  shareButton: {
+    backgroundColor: '#E4E4E7',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  shareButtonText: {
+    color: '#18181B',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Close Button (Dark)
+  closeButton: {
+    backgroundColor: '#3F3F46',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // Text Input
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D4D4D8',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    fontSize: 16,
+    backgroundColor: '#FFFFFF',
+    color: '#18181B',
+  },
+  instructionText: {
+    fontSize: 16,
+    color: '#3F3F46',
+    marginBottom: 12,
+  },
+
+  // Canvas Card (Load Dialog)
+  canvasCard: {
+    borderWidth: 1,
+    borderColor: '#D4D4D8',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  canvasCardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#18181B',
+    marginBottom: 8,
+  },
+  canvasCardInfo: {
+    fontSize: 14,
+    color: '#52525B',
+    marginBottom: 12,
+  },
+  canvasCardHint: {
+    fontSize: 12,
+    color: '#A1A1AA',
+  },
+
+  // Empty State
+  emptyState: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    color: '#71717A',
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
+  // Hidden Image View
+  hiddenImageView: {
+    position: 'absolute',
+    left: -10000,
+    top: -10000,
+    opacity: 0,
+  },
+});

@@ -1,7 +1,7 @@
 // src/ui/GuideModal.tsx
 // Accessible guide modal showing all gestures and instructions
 
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 
 interface GuideModalProps {
   onClose: () => void;
@@ -9,160 +9,216 @@ interface GuideModalProps {
 
 export function GuideModal({ onClose }: GuideModalProps) {
   return (
-    <View className="flex-1 bg-white">
-      <View className="p-4 border-b border-gray-200">
-        <Text className="text-xl font-bold text-gray-800">Drawing Guide</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Guide</Text>
       </View>
 
-      <ScrollView className="flex-1 p-4">
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+      <ScrollView style={styles.scrollContent}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             Basic Gestures
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Swipe up/down/left/right: Move focus to adjacent cell
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Tap: Inspect current cell (safe exploration)
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Double tap: Paint or erase current cell
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Long press (0.5 sec): Open color menu
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Extra long press (2 sec): Hear context (where am I, current mode and color)
           </Text>
         </View>
 
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             Color Menu
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Swipe left/right: Browse colors
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Double tap: Confirm selected color and close menu
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Long press: Close menu without changing color
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Note: Color menu reminds you after 5 seconds if still open
           </Text>
         </View>
 
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             Toolbar Navigation
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Toolbar is at the top of screen
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Swipe down from top to find toolbar buttons
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Swipe right/left to navigate between buttons
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Double tap to activate any button
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Swipe down past toolbar to return to canvas
           </Text>
         </View>
 
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             Toolbar Buttons
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Eraser: Toggle between paint and erase mode
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Undo: Undo last paint or erase action
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Redo: Redo last undone action
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Describe: Hear what you've drawn
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Actions: Save, load, clear, and share options
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Guide: Show this guide
           </Text>
         </View>
 
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             Available Colors
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             Black, White, Red, Green, Blue, Yellow, Magenta, Cyan, Orange,
             Purple, Pink, Brown
           </Text>
         </View>
 
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             Canvas Size
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             8 rows by 8 columns (64 cells total)
           </Text>
         </View>
 
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             Tips
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • All actions are announced with speech
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Haptic feedback confirms each action
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Hitting canvas boundary gives distinct feedback
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Save multiple canvases with custom names
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Export as text description or image
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Use extra long press (2 sec) anytime if you get lost
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Modals announce when they open and close
           </Text>
-          <Text className="text-base text-gray-700 mb-2">
+          <Text style={styles.instruction}>
             • Toolbar swipes don't affect canvas focus
           </Text>
         </View>
       </ScrollView>
 
-      <View className="p-4 border-t border-gray-200">
+      <View style={styles.footer}>
         <Pressable
           onPress={onClose}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Close guide"
           accessibilityHint="Double tap to return to canvas"
-          className="bg-blue-600 p-4 rounded-lg active:bg-blue-700"
+          style={styles.closeButton}
         >
-          <Text className="text-white text-lg font-semibold text-center">
-            Close Guide
+          <Text style={styles.closeButtonText}>
+            Close
           </Text>
         </Pressable>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E4E7',
+    backgroundColor: '#FFFFFF',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#18181B',
+  },
+  scrollContent: {
+    flex: 1,
+    padding: 24,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#18181B',
+    marginBottom: 12,
+  },
+  instruction: {
+    fontSize: 16,
+    color: '#3F3F46',
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  footer: {
+    padding: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#E4E4E7',
+    backgroundColor: '#FFFFFF',
+  },
+  closeButton: {
+    backgroundColor: '#3F3F46',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});
