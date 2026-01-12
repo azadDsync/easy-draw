@@ -2,12 +2,17 @@
 // Accessible guide modal showing all gestures and instructions
 
 import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { getCanvasDimensions, getDeviceInfo } from "../config/canvasConfig";
 
 interface GuideModalProps {
   onClose: () => void;
 }
 
 export function GuideModal({ onClose }: GuideModalProps) {
+  const canvasDimensions = getCanvasDimensions();
+  const deviceInfo = getDeviceInfo();
+  const totalCells = canvasDimensions.width * canvasDimensions.height;
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -114,7 +119,10 @@ export function GuideModal({ onClose }: GuideModalProps) {
             Canvas Size
           </Text>
           <Text style={styles.instruction}>
-            8 rows by 8 columns (64 cells total)
+            {canvasDimensions.height} rows by {canvasDimensions.width} columns ({totalCells} cells total)
+          </Text>
+          <Text style={styles.instruction}>
+            Device: {deviceInfo.isTablet ? 'Tablet' : 'Mobile'} • Cell Size: {deviceInfo.cellSize}px
           </Text>
         </View>
 
