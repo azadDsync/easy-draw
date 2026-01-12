@@ -1,6 +1,4 @@
-// app/canvas.tsx
-// Main canvas screen with gesture handling, visual grid, and accessibility features
-// Blind-first design with visual feedback as optional enhancement
+
 
 import { View, Text, Pressable, Modal, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
