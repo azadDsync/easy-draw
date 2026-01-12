@@ -63,6 +63,7 @@ Blind users can use the app **fully with TalkBack or VoiceOver enabled**, even w
 ---
 ## Sample Image
 <div style="display:flex; gap:100px;">
+  <img src="assets/sample-image/launch-screen.jpg" alt="Expo App" width="200" />
   <img src="assets/sample-image/1.jpg" alt="Expo App" width="200" />
   <img src="assets/sample-image/4.jpg" alt="Expo App" width="200" />
 </div>
